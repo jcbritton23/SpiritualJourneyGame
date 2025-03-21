@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Spiritual Journey Game</title>
+    <!-- Google Fonts for retro and modern mix -->
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      /* Body & General Layout */
+      body {
+        background-color: #f0f0f0;
+        background-image: url('https://www.transparenttextures.com/patterns/asfalt-light.png');
+        color: #333;
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        padding: 20px;
+        text-align: center;
+      }
+      #game-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border: 2px solid #333;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      /* Heading Styles */
+      h1, h2 {
+        font-family: 'Bungee', cursive;
+        margin-bottom: 10px;
+      }
+      /* Screen Visibility */
+      .screen {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      .active {
+        display: block;
+        opacity: 1;
+      }
+      /* Buttons (generic) */
+      button {
+        font-size: 1.2em;
+        padding: 12px 24px;
+        margin: 10px;
+        border: 2px solid #333;
+        border-radius: 8px;
+        cursor: pointer;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        transition: background-color 0.3s, transform 0.3s;
+      }
+      button:hover {
+        background-color: #e8e8e8;
+        transform: scale(1.05);
+      }
+      /* Character Creation Buttons with Different Colors */
+      .char-btn-devout { background-color: #d0f0f0; }
+      .char-btn-lgbtq { background-color: #f8c8dc; }
+      .char-btn-questioning { background-color: #fff3b0; }
+      /* Text Input */
+      input[type="text"] {
+        font-size: 1.2em;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 2px solid #333;
+        border-radius: 4px;
+        width: 70%;
+        max-width: 300px;
+      }
+      /* Main Game Layout: Map + Right Panel (Gauge, Beliefs, Avatar) */
+      #main-layout {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 20px;
+      }
+      #mapContainer { flex: 1; min-width: 300px; }
+      #sidebar {
+        width: 300px;
+        min-width: 250px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      /* Beliefs Container */
+      #beliefs-container {
+        margin-top: 10px;
+        padding: 10px;
+        border: 2px solid #333;
+        background-color: #fff;
+        text-align: left;
+        font-size: 0.9em;
+        width: 100%;
+      }
+      /* Location Beliefs Container */
+      #location-beliefs-container {
+        margin-top: 10px;
+        padding: 10px;
+        border: 2px solid #333;
+        background-color: #fff;
+        text-align: left;
+        font-size: 0.9em;
+        width: 100%;
+      }
+      /* Canvas styling */
+      canvas {
+        background-color: #fafafa;
+        border: 2px solid #333;
+        border-radius: 8px;
+      }
+      #mapCanvas { display: block; margin: 0 auto; cursor: pointer; }
+      /* Dialogue Box */
+      #dialogue-box {
+        font-size: 1.1em;
+        margin-top: 10px;
+        padding: 10px;
+        border: 2px solid #333;
+        background-color: #e6f7ff;
+        min-height: 50px;
+        border-radius: 8px;
+      }
+      /* Location sub-screen */
+      #location-screen { margin-top: 20px; }
+      #location-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      #location-gauge {
+        border: 2px solid #333;
+        background-color: #fff;
+        margin-left: 20px;
+        padding: 10px;
+        border-radius: 8px;
+      }
+      #location-actions { margin-top: 10px; }
+      #location-dialogue {
+        margin-top: 10px;
+        white-space: pre-line;
+        min-height: 60px;
+        border: 1px dashed #999;
+        padding: 10px;
+        background-color: #fcfcfc;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+      #location-dialogue:hover { background-color: #f2f2f2; }
+      /* Modal Styling for Major Events/Endings */
+      #event-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      #event-modal-content {
+        background-color: #fff;
+        color: #333;
+        border: 3px solid #333;
+        padding: 20px;
+        width: 500px;
+        max-width: 80%;
+        text-align: left;
+        animation: fadeIn 0.4s ease;
+        border-radius: 8px;
+      }
+      /* Conflict modal extra styling */
+      .conflict-modal {
+        background-color: #ffe0e0 !important;
+        border-color: #ff0000 !important;
+      }
+      #event-modal-content h2 {
+        font-size: 1.8em;
+        margin-bottom: 10px;
+        font-family: 'Bungee', cursive;
+      }
+      #event-modal-content p { font-size: 1.2em; margin-bottom: 20px; }
+      #modal-choices { margin-top: 10px; }
+      @keyframes fadeIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      /* Avatars */
+      #avatar-container { font-size: 4em; margin-top: 20px; }
+      #location-avatar { font-size: 3em; margin-top: 15px; }
+      /* Epiphany Alert Styling */
+      #epiphany-alert {
+        position: fixed;
+        top: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #ffff88;
+        color: #333;
+        border: 3px solid #333;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-family: 'Bungee', cursive;
+        font-size: 1.2em;
+        opacity: 0;
+        z-index: 9999;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- Character Creation Screen -->
+      <div id="character-creation" class="screen active">
+        <h1>Spiritual Journey Game</h1>
+        <h2>Create Your Character</h2>
+        <input type="text" id="char-name" placeholder="Enter your name" /><br>
+        <button class="char-btn-devout" onclick="window.selectCharacter('devout')">Devout Christian</button>
+        <button class="char-btn-lgbtq" onclick="window.selectCharacter('lgbtq')">LGBTQ+ Christian</button>
+        <button class="char-btn-questioning" onclick="window.selectCharacter('questioning')">Questioning Atheist</button>
+      </div>
+      <!-- Main Game Screen -->
+      <div id="game-screen" class="screen">
+        <h2 id="welcome-message"></h2>
+        <!-- Layout container for map and side panel -->
+        <div id="main-layout">
+          <div id="mapContainer">
+            <!-- Canvas for the Map -->
+            <canvas id="mapCanvas" width="600" height="400"></canvas>
+          </div>
+          <div id="sidebar">
+            <!-- Canvas for the Gauge Meter -->
+            <canvas id="gaugeCanvas" width="260" height="200"></canvas>
+            <!-- Beliefs Display Container -->
+            <div id="beliefs-container"></div>
+            <!-- Avatar Container (enlarged) -->
+            <div id="avatar-container"></div>
+          </div>
+        </div>
+        <!-- Dialogue Box -->
+        <div id="dialogue-box">Welcome to your community. Click on a location on the map to begin your journey.</div>
+      </div>
+      <!-- Location Sub-Screen -->
+      <div id="location-screen" class="screen">
+        <div id="location-top-bar">
+          <div>
+            <h2 id="location-name"></h2>
+            <div id="location-description"></div>
+            <!-- Location Beliefs Container -->
+            <div id="location-beliefs-container"></div>
+          </div>
+          <!-- Inline gauge on the location screen -->
+          <div id="location-gauge" style="width:260px; height:auto;">
+            <canvas id="locationGaugeCanvas" width="240" height="140"></canvas>
+            <div id="location-avatar"></div>
+          </div>
+        </div>
+        <div id="location-actions"></div>
+        <div id="location-dialogue"></div>
+        <button onclick="returnToMap()">Return to Map</button>
+      </div>
+      <!-- Event/Ending Modal -->
+      <div id="event-modal">
+        <div id="event-modal-content" onclick="event.stopPropagation()">
+          <h2 id="modal-title">Event Title</h2>
+          <p id="modal-message">Event message goes here.</p>
+          <div id="modal-choices"></div>
+          <button onclick="closeEventModal()">Close</button>
+        </div>
+      </div>
+      <!-- Epiphany Alert -->
+      <div id="epiphany-alert">✨ Epiphany! Beliefs Updated! ✨</div>
+    </div>
+    <script>
+      // ================= GLOBALS ================
+      var stats = { faith: 0, social: 0, stress: 0 };
+      var characterName = "";
+      var characterType = "";
+      var actionCount = 0;  // Ending check after 5 actions now.
+      var beliefsChangedCount = 0;
+      // Flags for events
+      var hasFaithCrisisHappened = false;
+      var hasConflictHappened = false;
+      var hasDepressionHappened = false;
+      var hasEpiphanyHappened = false;
+      var resolvedConflictOrCrisis = false;
+      
+      // ================= openEventModal FUNCTION =================
+      function openEventModal(title, message, choices, isConflict = false) {
+        console.log("openEventModal called with:", title, message);
+        const modalContent = document.getElementById('event-modal-content');
+        modalContent.classList.toggle('conflict-modal', isConflict);
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-message').innerText = message;
+        const modalChoices = document.getElementById('modal-choices');
+        modalChoices.innerHTML = "";
+        choices.forEach(function(opt) {
+          const btn = document.createElement('button');
+          btn.innerText = opt.label;
+          btn.onclick = opt.callback;
+          modalChoices.appendChild(btn);
+        });
+        document.getElementById('event-modal').style.display = 'flex';
+        console.log("Event modal displayed.");
+      }
+      
+      // ================= TRIGGER INTERACTION FUNCTION =================
+      // This function tailors the scenario based on the current character type.
+      function triggerInteraction(actionType, locType) {
+        console.log("triggerInteraction called with actionType:", actionType, "locType:", locType);
+        const baseScenarios = interactionScenarios[locType] && interactionScenarios[locType][actionType];
+        if (!baseScenarios || baseScenarios.length === 0) {
+          console.log("No scenarios for", locType, actionType);
+          return;
+        }
+        const baseScenario = baseScenarios[Math.floor(Math.random() * baseScenarios.length)];
+        const scenario = {
+          title: baseScenario.title[characterType],
+          message: baseScenario.message[characterType],
+          choices: baseScenario.choices[characterType]
+        };
+        console.log("Chosen tailored scenario:", scenario);
+        const choices = scenario.choices.map(choice => {
+          return {
+            label: choice.label,
+            callback: function() {
+              console.log("Executing choice callback for:", choice.label);
+              // Larger impacts for quicker change:
+              stats.faith += choice.effects.faith;
+              stats.social += choice.effects.social;
+              stats.stress += choice.effects.stress;
+              updateBeliefs(choice.effects.belief);
+              finalizeStats();
+              drawGauges();
+              drawLocationGauges();
+              updateBeliefsDisplay();
+              document.getElementById('location-dialogue').innerText += "\n" + scenario.title + " response: " + choice.label + ". " + getRandomReflection();
+              // Update avatar expression based on choice
+              if (actionType === "reflect") {
+                updateAvatarExpression('reflect');
+              } else if (choice.label === "Reject") {
+                updateAvatarExpression('conflict');
+              } else if (choice.label === "Accept") {
+                updateAvatarExpression('epiphany');
+              } else {
+                updateAvatarExpression('normal');
+              }
+              flashGauge();
+              closeEventModal();
+              actionCount++;
+              checkForEnding();
+            }
+          };
+        });
+        console.log("Prepared choices:", choices);
+        openEventModal(scenario.title, scenario.message, choices, scenario.title.toLowerCase().includes("conflict"));
+      }
+      
+      // ================= BELIEF BANKS =================
+      // Initial beliefs are set per character type.
+      const beliefBanks = {
+        devout: [
+          { text: "My faith is unwavering and built on eternal truths.", state: "original" },
+          { text: "Traditional family structures and roles are divinely established.", state: "original" },
+          { text: "Questioning doctrines weakens faith.", state: "original" }
+        ],
+        lgbtq: [
+          { text: "God loves and accepts me exactly as I am.", state: "original" },
+          { text: "Authentic faith welcomes questioning and exploration.", state: "original" },
+          { text: "My community should embrace diversity and inclusion.", state: "original" }
+        ],
+        questioning: [
+          { text: "Beliefs must always be challenged by reason and evidence.", state: "original" },
+          { text: "Faith traditions often harm marginalized groups.", state: "original" },
+          { text: "True community supports individuality over conformity.", state: "original" }
+        ]
+      };
+      let currentBeliefs = [];
+      
+      // ================= DYNAMIC AVATAR EXPRESSIONS =================
+      const avatars = {
+        devout: { normal: '🙏', conflict: '😟', reflect: '🤔', epiphany: '😊' },
+        lgbtq: { normal: '🌈', conflict: '😟', reflect: '🤔', epiphany: '😊' },
+        questioning: { normal: '🤔', conflict: '😟', reflect: '🤔', epiphany: '😊' }
+      };
+      
+      function updateAvatarExpression(state = 'normal') {
+        const avatarContainers = document.querySelectorAll('#avatar-container, #location-avatar');
+        avatarContainers.forEach(el => {
+          el.innerText = avatars[characterType][state];
+          el.style.transition = "transform 0.5s";
+          el.style.transform = "scale(1.3)";
+          setTimeout(() => { el.style.transform = "scale(1)"; }, 500);
+        });
+      }
+      
+      // ================= UPDATE & DISPLAY BELIEFS =================
+      function updateBeliefsDisplay() {
+        function beliefToHTML(b) {
+          switch (b.state) {
+            case "strengthened": return `<li style="color:green;">${b.text}</li>`;
+            case "weakened": return `<li style="color:red;"><em>${b.text}</em></li>`;
+            case "nuanced": return `<li style="color:blue;"><em>${b.text}</em></li>`;
+            default: return `<li>${b.text}</li>`;
+          }
+        }
+        const beliefsHTML = "<h3>Beliefs</h3><ul>" + currentBeliefs.map(beliefToHTML).join('') + "</ul>";
+        document.getElementById('beliefs-container').innerHTML = beliefsHTML;
+        const locBeliefsContainer = document.getElementById('location-beliefs-container');
+        if (locBeliefsContainer) { locBeliefsContainer.innerHTML = beliefsHTML; }
+      }
+      
+      // Update beliefs more frequently (70% chance if already changed) with larger impact
+      function updateBeliefs(effect) {
+        currentBeliefs = currentBeliefs.map(belief => {
+          let shouldUpdate = false;
+          if (belief.state === "original") {
+            shouldUpdate = true;
+          } else {
+            if (Math.random() < 0.9) shouldUpdate = true;
+          }
+          if (shouldUpdate && effect !== "") {
+            let oldText = belief.text;
+            // For Devout:
+            if (effect === "strengthen_traditional" && belief.text.includes("Traditional family")) {
+              belief.text = "Traditional family structures are sacred and must be preserved without compromise.";
+              belief.state = "strengthened";
+            } else if (effect === "weaken_traditional" && belief.text.includes("Traditional family")) {
+              belief.text = "Family structures should be defined by love, not rigid tradition.";
+              belief.state = "weakened";
+            } else if (effect === "nuance_traditional" && belief.text.includes("Traditional family")) {
+              belief.text = "I value tradition, yet I see that compassion can reshape family roles.";
+              belief.state = "nuanced";
+            }
+            // For LGBTQ+:
+            else if (effect === "strengthen_inclusive" && belief.text.includes("accept")) {
+              belief.text = "God’s love is unconditional—I am cherished exactly as I am.";
+              belief.state = "strengthened";
+            } else if (effect === "weaken_inclusive" && belief.text.includes("accept")) {
+              belief.text = "I question if acceptance is truly without condition.";
+              belief.state = "weakened";
+            } else if (effect === "nuance_inclusive" && belief.text.includes("accept")) {
+              belief.text = "I recognize both the power and the limits of community acceptance.";
+              belief.state = "nuanced";
+            }
+            // For Questioning:
+            else if (effect === "strengthen_questioning" && belief.text.includes("challenged")) {
+              belief.text = "Continuous inquiry fuels my understanding of the world.";
+              belief.state = "strengthened";
+            } else if (effect === "weaken_questioning" && belief.text.includes("challenged")) {
+              belief.text = "Over-questioning sometimes leaves me feeling isolated.";
+              belief.state = "weakened";
+            } else if (effect === "nuance_questioning" && belief.text.includes("challenged")) {
+              belief.text = "I balance skepticism with openness, aware that certainty is elusive.";
+              belief.state = "nuanced";
+            }
+            if (oldText !== belief.text) {
+              beliefsChangedCount++;
+              triggerEpiphanyAlert("Belief Updated:\n\"" + oldText + "\" → \"" + belief.text + "\"");
+            }
+          }
+          return belief;
+        });
+        updateBeliefsDisplay();
+      }
+      
+      // ================= EPIPHANY ALERT =================
+      function triggerEpiphanyAlert(message = "✨ Epiphany! Beliefs Updated! ✨") {
+        const alertElem = document.getElementById('epiphany-alert');
+        alertElem.innerText = message;
+        alertElem.style.transition = "opacity 0.5s ease-in-out, top 0.5s ease-in-out";
+        alertElem.style.opacity = "1";
+        alertElem.style.top = "15%";
+        setTimeout(() => {
+          alertElem.style.opacity = "0";
+          alertElem.style.top = "10%";
+        }, 3000);
+      }
+      
+      // ================= GAUGE FLASH FUNCTION =================
+      function flashGauge() {
+        const gaugeCanvas = document.getElementById('gaugeCanvas');
+        gaugeCanvas.style.transition = "box-shadow 0.4s ease-in-out";
+        gaugeCanvas.style.boxShadow = "0 0 15px yellow";
+        setTimeout(() => { gaugeCanvas.style.boxShadow = "none"; }, 600);
+      }
+      
+      // ================= CHARACTER CREATION =================
+      function selectCharacter(type) {
+        console.log("selectCharacter called with type:", type);
+        const nameInput = document.getElementById('char-name');
+        console.log("Name input value: '" + nameInput.value + "'");
+        if (nameInput.value.trim() === "") {
+          alert("Please enter a name for your character.");
+          return;
+        }
+        characterName = nameInput.value.trim();
+        characterType = type;
+        if (type === 'devout') {
+          stats.faith  = 80;
+          stats.social = 70;
+          stats.stress = 20;
+          currentBeliefs = JSON.parse(JSON.stringify(beliefBanks.devout));
+        } else if (type === 'lgbtq') {
+          stats.faith  = 60;
+          stats.social = 50;
+          stats.stress = 40;
+          currentBeliefs = JSON.parse(JSON.stringify(beliefBanks.lgbtq));
+        } else {
+          stats.faith  = 30;
+          stats.social = 40;
+          stats.stress = 70;
+          currentBeliefs = JSON.parse(JSON.stringify(beliefBanks.questioning));
+        }
+        updateBeliefsDisplay();
+        console.log("Stats after selection:", stats);
+        document.getElementById('character-creation').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        document.getElementById('welcome-message').innerText = "Welcome, " + characterName + "!";
+        drawMap();
+        drawGauges();
+        console.log("Transitioned to game-screen.");
+      }
+      window.selectCharacter = selectCharacter;
+      
+      // ================= MAP DRAWING =================
+      function drawMap() {
+        const mapCanvas = document.getElementById('mapCanvas');
+        const mapCtx = mapCanvas.getContext('2d');
+        mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+        mapCtx.fillStyle = '#d9eaf7';
+        mapCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+        locations.forEach(function(loc) {
+          mapCtx.beginPath();
+          mapCtx.arc(loc.x, loc.y, 30, 0, 2 * Math.PI);
+          mapCtx.fillStyle = '#fff';
+          mapCtx.fill();
+          mapCtx.lineWidth = 3;
+          mapCtx.strokeStyle = '#333';
+          mapCtx.stroke();
+          mapCtx.font = '28px "Montserrat"';
+          mapCtx.textAlign = 'center';
+          mapCtx.textBaseline = 'middle';
+          mapCtx.fillStyle = '#333';
+          mapCtx.fillText(loc.emoji, loc.x, loc.y);
+          mapCtx.font = 'bold 14px "Montserrat"';
+          mapCtx.fillText(loc.name, loc.x, loc.y + 50);
+        });
+      }
+      
+      // ================= MAP INTERACTIONS =================
+      const locations = [
+        { name: "Traditional Church", type: "traditional", x: 100, y: 80, emoji: "⛪", desc: "A historic chapel with solemn pews and strict doctrines." },
+        { name: "Progressive Church", type: "progressive", x: 450, y: 90, emoji: "🕊️", desc: "An inclusive space that challenges traditional norms." },
+        { name: "Megachurch", type: "megachurch", x: 300, y: 200, emoji: "🎤", desc: "A sprawling complex known for its big crowds and flashy services." },
+        { name: "Counseling Center", type: "counseling", x: 150, y: 320, emoji: "💼", desc: "A quiet building where professionals offer mental health support." },
+        { name: "Home", type: "home", x: 500, y: 300, emoji: "🏠", desc: "Your personal sanctuary, a place of rest and reflection." }
+      ];
+      
+      document.getElementById('mapCanvas').addEventListener('mousemove', function(e) {
+        const rect = this.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        let overLocation = false;
+        locations.forEach(function(loc) {
+          const dx = mouseX - loc.x;
+          const dy = mouseY - loc.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= 30) {
+            overLocation = true;
+          }
+        });
+        this.style.cursor = overLocation ? 'pointer' : 'default';
+      });
+      
+      document.getElementById('mapCanvas').addEventListener('click', function(ev) {
+        const rect = this.getBoundingClientRect();
+        const mouseX = ev.clientX - rect.left;
+        const mouseY = ev.clientY - rect.top;
+        locations.forEach(function(loc) {
+          const dx = mouseX - loc.x;
+          const dy = mouseY - loc.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= 30) {
+            openLocationScreen(loc);
+          }
+        });
+      });
+      
+      // ================= GAUGE DRAWING =================
+      function drawGauges() {
+        const gaugeCanvas = document.getElementById('gaugeCanvas');
+        const gaugeCtx = gaugeCanvas.getContext('2d');
+        gaugeCtx.clearRect(0, 0, gaugeCanvas.width, gaugeCanvas.height);
+        drawGaugeBar(gaugeCtx, 'Faith', stats.faith, 10, 30);
+        drawGaugeBar(gaugeCtx, 'Social', stats.social, 10, 80);
+        drawGaugeBar(gaugeCtx, 'Stress', stats.stress, 10, 130);
+      }
+      
+      function drawGaugeBar(ctx, label, value, x, y) {
+        ctx.font = 'bold 14px "Montserrat"';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, x, y - 5);
+        ctx.fillStyle = '#ddd';
+        ctx.fillRect(x, y, 200, 20);
+        const barWidth = Math.max(0, Math.min((value / 100) * 200, 200));
+        ctx.fillStyle = (label === 'Stress') ? '#ff6347' : (label === 'Faith' ? '#32cd32' : '#1e90ff');
+        ctx.fillRect(x, y, barWidth, 20);
+        ctx.strokeStyle = '#333';
+        ctx.strokeRect(x, y, 200, 20);
+      }
+      
+      function drawLocationGauges() {
+        const locationGaugeCanvas = document.getElementById('locationGaugeCanvas');
+        const locationGaugeCtx = locationGaugeCanvas.getContext('2d');
+        locationGaugeCtx.clearRect(0, 0, locationGaugeCanvas.width, locationGaugeCanvas.height);
+        drawGaugeBar(locationGaugeCtx, 'Faith', stats.faith, 20, 20);
+        drawGaugeBar(locationGaugeCtx, 'Social', stats.social, 20, 60);
+        drawGaugeBar(locationGaugeCtx, 'Stress', stats.stress, 20, 100);
+      }
+      
+      // ================= LOCATION SCREEN =================
+      function openLocationScreen(loc) {
+        currentLocation = loc;
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('location-screen').classList.add('active');
+        document.getElementById('location-name').innerText = loc.name + ' ' + loc.emoji;
+        document.getElementById('location-description').innerText = loc.desc;
+        document.getElementById('location-dialogue').innerText = '';
+        document.getElementById('location-actions').innerHTML = '';
+        drawLocationGauges();
+        document.getElementById('location-avatar').innerText = avatars[characterType].normal;
+        updateBeliefsDisplay();
+        // Create tailored action buttons for interactions
+        createActionButton('Talk to Someone', () => triggerInteraction('talk', loc.type));
+        createActionButton('Read the Bulletin', () => triggerInteraction('bulletin', loc.type));
+        createActionButton('Reflect', () => {
+          updateAvatarExpression('reflect');
+          triggerInteraction('reflect', loc.type);
+        });
+      }
+      
+      function createActionButton(label, cb) {
+        const btn = document.createElement('button');
+        btn.innerText = label;
+        btn.onclick = cb;
+        document.getElementById('location-actions').appendChild(btn);
+      }
+      
+      // ================= TAILORED INTERACTION SCENARIOS =================
+      // Each location type has scenarios tailored by action type. Impacts have been increased for faster change.
+      const interactionScenarios = {
+        traditional: {
+          talk: [{
+            title: {
+              devout: "Sermon on Tradition",
+              lgbtq: "Challenging Sermon",
+              questioning: "Contested Sermon"
+            },
+            message: {
+              devout: "The pastor declares, 'Our faith must be preserved—any deviation risks our salvation.'",
+              lgbtq: "The pastor insists on tradition, while you feel the sting of exclusion.",
+              questioning: "The pastor's unwavering tone forces you to confront the cost of certainty."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 10, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reject", effects: { faith: -25, social: -10, stress: 15, belief: "weaken_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 20, stress: -10, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -10, stress: 15, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Traditional Bulletin",
+              lgbtq: "Dissonant Bulletin",
+              questioning: "Questioning Bulletin"
+            },
+            message: {
+              devout: "A bulletin warns: 'Secular influences threaten our sacred traditions.'",
+              lgbtq: "The bulletin reinforces exclusion, deepening your inner conflict.",
+              questioning: "The bulletin’s one-sided message forces you to confront its limitations."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 10, belief: "strengthen_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 10, belief: "weaken_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 20, stress: -10, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -20, stress: 10, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Tradition",
+              lgbtq: "Internal Reflection",
+              questioning: "Contemplative Reflection"
+            },
+            message: {
+              devout: "You ponder: Can I remain true to tradition while growing spiritually?",
+              lgbtq: "You reflect on the conflict between your identity and inherited dogma.",
+              questioning: "You wonder if relentless questioning might lead to a deeper truth."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 20, belief: "strengthen_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 10, belief: "weaken_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 15, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        progressive: {
+          talk: [{
+            title: {
+              devout: "Conservative Sermon",
+              lgbtq: "Affirming Sermon",
+              questioning: "Inquisitive Sermon"
+            },
+            message: {
+              devout: "A pastor warns: 'Return to the ancient ways or face spiritual decline.'",
+              lgbtq: "A pastor proclaims: 'Embrace love and progress—let tradition evolve.'",
+              questioning: "A pastor offers a provocative truth, urging you to explore beyond rigid dogma."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 10, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 10, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: -15, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -20, stress: 15, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Conservative Bulletin",
+              lgbtq: "Inclusive Bulletin",
+              questioning: "Critical Bulletin"
+            },
+            message: {
+              devout: "A bulletin states: 'Uphold our cherished traditions or be lost to modernity.'",
+              lgbtq: "A bulletin proclaims: 'True faith embraces progress and inclusion.'",
+              questioning: "A bulletin challenges: 'Can outdated dogma meet the needs of today?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 10, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 10, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: -15, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -20, stress: 15, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Conviction",
+              lgbtq: "Introspective Reflection",
+              questioning: "Socratic Reflection"
+            },
+            message: {
+              devout: "You ponder if a slight departure from tradition could deepen your faith.",
+              lgbtq: "You consider how progressive ideas might finally reconcile your heart with your heritage.",
+              questioning: "You weigh every argument, seeking a balanced path that honors doubt and insight."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 20, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 10, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        megachurch: {
+          talk: [{
+            title: {
+              devout: "Grand Sermon",
+              lgbtq: "Flamboyant Sermon",
+              questioning: "Spectacular Sermon"
+            },
+            message: {
+              devout: "A charismatic preacher insists, 'Divine prosperity and tradition go hand in hand.'",
+              lgbtq: "The preacher’s glittering display hides exclusion—your heart feels conflicted.",
+              questioning: "The sermon is lavish yet leaves you questioning its superficial allure."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: 0, belief: "strengthen_prosperity" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 15, belief: "weaken_prosperity" } },
+                { label: "Reconsider", effects: { faith: 10, social: 0, stress: 0, belief: "nuance_prosperity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 20, stress: -15, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -10, stress: 15, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Prosperity Bulletin",
+              lgbtq: "Unsettling Bulletin",
+              questioning: "Critical Bulletin"
+            },
+            message: {
+              devout: "A bulletin proclaims, 'Financial generosity brings divine blessings and tradition.'",
+              lgbtq: "The bulletin hints that material success comes at the cost of true acceptance.",
+              questioning: "The message rings hollow, prompting deeper inquiry into prosperity’s true value."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 15, social: 10, stress: 0, belief: "strengthen_prosperity" } },
+                { label: "Reject", effects: { faith: -15, social: -10, stress: 10, belief: "weaken_prosperity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_prosperity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 20, stress: -10, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -20, stress: 10, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Prosperity",
+              lgbtq: "Contemplate Prosperity",
+              questioning: "Question Prosperity"
+            },
+            message: {
+              devout: "You consider whether divine prosperity truly rewards unwavering faith.",
+              lgbtq: "You ponder if material wealth can coexist with genuine inclusivity.",
+              questioning: "You question whether chasing prosperity distracts from a deeper purpose."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 15, social: 10, stress: 0, belief: "strengthen_prosperity" } },
+                { label: "Reject", effects: { faith: -15, social: 0, stress: 10, belief: "weaken_prosperity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -10, belief: "nuance_prosperity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 20, stress: -10, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -15, social: -10, stress: 10, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        counseling: {
+          talk: [{
+            title: {
+              devout: "Traditional Counsel",
+              lgbtq: "Healing Dialogue",
+              questioning: "Introspective Dialogue"
+            },
+            message: {
+              devout: "Counselor Jade advises, 'Maintain your strong faith to overcome doubt.'",
+              lgbtq: "Counselor Jade asks, 'How can you reconcile your identity with the church’s traditional views?'",
+              questioning: "Counselor Jade inquires, 'Is relentless questioning causing you harm?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Counseling Bulletin",
+              lgbtq: "Supportive Bulletin",
+              questioning: "Critical Bulletin"
+            },
+            message: {
+              devout: "Bulletin: 'Uphold your enduring faith even in turmoil.'",
+              lgbtq: "Bulletin: 'Find solace in a community that embraces you fully.'",
+              questioning: "Bulletin: 'Doubt and inquiry pave the way for growth.'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 10, stress: -15, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -10, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Counseling",
+              lgbtq: "Deep Inner Reflection",
+              questioning: "Philosophical Reflection"
+            },
+            message: {
+              devout: "You consider the counsel and how it might open your rigid beliefs to growth.",
+              lgbtq: "You reflect on how both support and rejection have shaped your spiritual identity.",
+              questioning: "You evaluate whether constant questioning is leading you toward wisdom or despair."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        home: {
+          talk: [{
+            title: {
+              devout: "Family Tradition",
+              lgbtq: "Family Confrontation",
+              questioning: "Family Debate"
+            },
+            message: {
+              devout: "A family member warns, 'Your questioning might lead you astray from our sacred traditions.'",
+              lgbtq: "A relative insists, 'Our family values must be upheld—even if it means suppressing who you truly are.'",
+              questioning: "A family voice challenges you: 'Are you losing touch with what matters most?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: 25, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -20, social: -15, stress: 15, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 15, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -10, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 10, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Family Bulletin",
+              lgbtq: "Tense Family Bulletin",
+              questioning: "Critical Family Bulletin"
+            },
+            message: {
+              devout: "Bulletin: 'Family values are the bedrock of our lives—stay true to tradition.'",
+              lgbtq: "Bulletin: 'Our family upholds tradition, even if it means silencing true self-expression.'",
+              questioning: "Bulletin: 'Is family loyalty worth the sacrifice of personal truth?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: 20, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -25, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Family Values",
+              lgbtq: "Contemplate Family Dynamics",
+              questioning: "Family Self-Reflection"
+            },
+            message: {
+              devout: "You consider how deeply tradition has shaped your identity and what it costs you.",
+              lgbtq: "You reflect on the pain of suppressing your true self for the sake of family tradition.",
+              questioning: "You question whether the bonds of family are a source of strength or of constraint."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -25, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 15, social: 15, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 0, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        // ================= PROGRESSIVE CHURCH SCENARIOS =================
+        // Progressive church encourages progressive (inclusive) change in everyone.
+        progressive: {
+          talk: [{
+            title: {
+              devout: "Challenging Sermon",
+              lgbtq: "Affirming Sermon",
+              questioning: "Open-Minded Sermon"
+            },
+            message: {
+              devout: "A pastor urges: 'Embrace progress and reconsider outdated dogma.'",
+              lgbtq: "A pastor passionately declares: 'All faith must evolve towards inclusivity and love.'",
+              questioning: "A pastor offers, 'Perhaps faith can be flexible, blending reason with compassion.'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: -20, social: 20, stress: -10, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: 20, social: -10, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -15, social: -15, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Progressive Bulletin",
+              lgbtq: "Inclusive Bulletin",
+              questioning: "Critical Bulletin"
+            },
+            message: {
+              devout: "A bulletin states: 'Tradition can be a prison; let your faith grow in freedom.'",
+              lgbtq: "A bulletin proclaims: 'Love and progress redefine faith for all.'",
+              questioning: "A bulletin challenges: 'Rigid beliefs hinder true understanding—embrace evolution.'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: -20, social: 20, stress: -10, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: 20, social: -10, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Change",
+              lgbtq: "Introspective Reflection",
+              questioning: "Socratic Reflection"
+            },
+            message: {
+              devout: "You wonder if embracing progressive ideas might actually deepen your faith instead of weakening it.",
+              lgbtq: "You feel a warm surge of acceptance—could this be the reconciliation you’ve longed for?",
+              questioning: "You consider that blending skepticism with a touch of faith might offer unexpected wisdom."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: -20, social: 20, stress: -15, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: 20, social: -15, stress: 15, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -20, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -10, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        counseling: {
+          talk: [{
+            title: {
+              devout: "Traditional Counsel",
+              lgbtq: "Healing Dialogue",
+              questioning: "Introspective Dialogue"
+            },
+            message: {
+              devout: "Counselor Jade advises, 'Maintain your enduring faith to weather doubt.'",
+              lgbtq: "Counselor Jade asks, 'How can you integrate your identity with your spiritual journey?'",
+              questioning: "Counselor Jade inquires, 'Is your perpetual questioning wearing you down?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: -20, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 20, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -25, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 25, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Counseling Bulletin",
+              lgbtq: "Supportive Bulletin",
+              questioning: "Critical Bulletin"
+            },
+            message: {
+              devout: "Bulletin: 'Stay grounded in your faith during turbulent times.'",
+              lgbtq: "Bulletin: 'Embrace support that honors your true self.'",
+              questioning: "Bulletin: 'Acknowledge that doubt can lead to growth.'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 15, stress: -20, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 20, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: 0, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -25, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -15, stress: 25, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Counseling",
+              lgbtq: "Deep Inner Reflection",
+              questioning: "Philosophical Reflection"
+            },
+            message: {
+              devout: "You ponder the counsel and consider if even a slight shift could lead to deeper spiritual integration.",
+              lgbtq: "You reflect on how support and rejection have both shaped your identity and faith.",
+              questioning: "You critically evaluate the advice, wondering if embracing some faith might bring unexpected wisdom."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: -20, belief: "nuance_traditional" } },
+                { label: "Reject", effects: { faith: -25, social: -20, stress: 20, belief: "strengthen_traditional" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -15, belief: "nuance_traditional" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -25, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -25, stress: 25, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -15, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        },
+        home: {
+          talk: [{
+            title: {
+              devout: "Family Tradition",
+              lgbtq: "Family Confrontation",
+              questioning: "Family Debate"
+            },
+            message: {
+              devout: "A family member warns, 'Your unwavering adherence to tradition will isolate you if you stray.'",
+              lgbtq: "A relative insists, 'Our family must remain traditional—even if it means hiding who you truly are.'",
+              questioning: "A family voice challenges: 'Are you sacrificing genuine connection for relentless doubt?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: 25, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -25, social: -20, stress: 20, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -15, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 20, social: 25, stress: -25, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -30, social: -20, stress: 25, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: -5, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          bulletin: [{
+            title: {
+              devout: "Family Bulletin",
+              lgbtq: "Tense Family Bulletin",
+              questioning: "Critical Family Bulletin"
+            },
+            message: {
+              devout: "Bulletin: 'Family values are our foundation—never stray from them.'",
+              lgbtq: "Bulletin: 'Our family clings to tradition, even if it means silencing individuality.'",
+              questioning: "Bulletin: 'Is blind loyalty to family worth the loss of your true self?'"
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: 20, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -25, social: -20, stress: 20, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: 0, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -20, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -25, stress: 20, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: 0, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -15, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 15, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 10, stress: 0, belief: "nuance_questioning" } }
+              ]
+            }
+          }],
+          reflect: [{
+            title: {
+              devout: "Reflect on Family Values",
+              lgbtq: "Contemplate Family Dynamics",
+              questioning: "Family Self-Reflection"
+            },
+            message: {
+              devout: "You consider how the weight of family tradition has shaped you—both its comfort and its cost.",
+              lgbtq: "You reflect on the pain of conforming to family expectations and the cost of suppressing your true identity.",
+              questioning: "You question whether familial bonds are nurturing or merely a chain holding you back."
+            },
+            choices: {
+              devout: [
+                { label: "Accept", effects: { faith: 25, social: 20, stress: -20, belief: "strengthen_conformity" } },
+                { label: "Reject", effects: { faith: -25, social: -20, stress: 20, belief: "weaken_conformity" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -15, belief: "nuance_conformity" } }
+              ],
+              lgbtq: [
+                { label: "Accept", effects: { faith: 25, social: 25, stress: -25, belief: "strengthen_inclusive" } },
+                { label: "Reject", effects: { faith: -25, social: -25, stress: 25, belief: "weaken_inclusive" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -15, belief: "nuance_inclusive" } }
+              ],
+              questioning: [
+                { label: "Accept", effects: { faith: 20, social: 20, stress: -20, belief: "strengthen_questioning" } },
+                { label: "Reject", effects: { faith: -20, social: -20, stress: 20, belief: "weaken_questioning" } },
+                { label: "Reconsider", effects: { faith: 0, social: 15, stress: -10, belief: "nuance_questioning" } }
+              ]
+            }
+          }]
+        }
+      };
+      
+      // ================= ENDING & EVENT CHECKS =================
+      // Endings trigger sooner—after 5 actions now.
+      function checkForEnding() {
+        if (actionCount >= 5) {
+          // Belief-based ending: if 2 or more beliefs have changed, trigger Epiphany Ending.
+          if (beliefsChangedCount >= 2) {
+            openEndingModal('Epiphany Ending', 'Your early questioning and evolution of beliefs have led to profound personal growth.');
+            return;
+          }
+          // Tailored positive endings:
+          if (characterType === 'devout' && stats.faith >= 70 && stats.stress <= 40 && resolvedConflictOrCrisis) {
+            openEndingModal('Deepened Faith Ending', 'Your unwavering devotion has blossomed into a deep, fulfilling spirituality.');
+            return;
+          }
+          if (characterType === 'lgbtq' && stats.faith >= 70 && stats.social >= 70 && stats.stress <= 40) {
+            openEndingModal('Self-Acceptance Ending', 'You have embraced your true self, and your spirituality reflects a harmonious unity.');
+            return;
+          }
+          if (characterType === 'questioning' && stats.faith >= 20 && stats.faith <= 60 && stats.social >= 20 && stats.social <= 60 && stats.stress < 50 && resolvedConflictOrCrisis) {
+            openEndingModal('Balanced Wisdom Ending', 'Your blend of skepticism and openness has led you to a balanced, compassionate worldview.');
+            return;
+          }
+          // Negative/interesting endings:
+          if (stats.faith < 20) {
+            if (characterType === 'devout') {
+              openEndingModal('Faith Crisis Ending', 'Your rigid faith crumbles under the weight of doubt, leaving you spiritually adrift.');
+            } else if (characterType === 'lgbtq') {
+              openEndingModal('Identity Suppression Ending', 'In trying to conform, you have suppressed your true self, and now you feel broken inside.');
+            } else {
+              openEndingModal('Existential Nihilism Ending', 'Your relentless questioning has eroded your sense of meaning, leaving life painfully empty.');
+            }
+            return;
+          }
+          if (stats.stress >= 80) {
+            openEndingModal('Burnout Ending', 'The crushing pressure of conflicting values has left you overwhelmed and isolated.');
+            return;
+          }
+        }
+      }
+      
+      function openEndingModal(title, message) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-message').innerText = message;
+        const modalChoices = document.getElementById('modal-choices');
+        modalChoices.innerHTML = "";
+        const b = document.createElement('button');
+        b.innerText = 'Play Again';
+        b.onclick = function() { window.location.reload(); };
+        modalChoices.appendChild(b);
+        document.getElementById('event-modal').style.display = 'flex';
+      }
+      
+      // ================= RANDOM POPUPS & EVENT TRIGGERS =================
+      function checkRandomPopups() {
+        if (actionCount >= 3 && actionCount % 3 === 0) {
+          openRandomRuminations();
+        }
+      }
+      
+      function openRandomRuminations() {
+        let scenarios = [];
+        if (currentLocation) {
+          switch (currentLocation.type) {
+            case 'traditional':
+              scenarios = [{
+                title: {
+                  devout: "Old Traditions Stir",
+                  lgbtq: "Old Wounds Resurface",
+                  questioning: "Tradition Under Scrutiny"
+                },
+                message: "The age-old hymns feel heavier today—do you cling to them or challenge their hold?",
+                choices: {
+                  devout: [
+                    { label: "Accept", effects: { faith: 10, social: 5, stress: 10, belief: "strengthen_traditional" } },
+                    { label: "Reject", effects: { faith: -10, social: -5, stress: 10, belief: "weaken_traditional" } },
+                    { label: "Reconsider", effects: { faith: 0, social: 5, stress: 5, belief: "nuance_traditional" } }
+                  ],
+                  lgbtq: [
+                    { label: "Accept", effects: { faith: 10, social: 10, stress: -10, belief: "strengthen_inclusive" } },
+                    { label: "Reject", effects: { faith: -10, social: -10, stress: 10, belief: "weaken_inclusive" } },
+                    { label: "Reconsider", effects: { faith: 0, social: 5, stress: 0, belief: "nuance_inclusive" } }
+                  ],
+                  questioning: [
+                    { label: "Accept", effects: { faith: 10, social: 10, stress: -10, belief: "strengthen_questioning" } },
+                    { label: "Reject", effects: { faith: -10, social: -10, stress: 10, belief: "weaken_questioning" } },
+                    { label: "Reconsider", effects: { faith: 0, social: 5, stress: 0, belief: "nuance_questioning" } }
+                  ]
+                }
+              }];
+              break;
+            default:
+              scenarios = [{
+                title: {
+                  devout: "Moment of Pause",
+                  lgbtq: "Brief Reflection",
+                  questioning: "Interim Reflection"
+                },
+                message: "A pause offers a moment of introspection—do you seize it or move on?",
+                choices: {
+                  devout: [
+                    { label: "Reflect", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_traditional" } },
+                    { label: "Move On", effects: { faith: 0, social: 0, stress: 0, belief: "" } },
+                    { label: "Contemplate", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_traditional" } }
+                  ],
+                  lgbtq: [
+                    { label: "Reflect", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_inclusive" } },
+                    { label: "Move On", effects: { faith: 0, social: 0, stress: 0, belief: "" } },
+                    { label: "Contemplate", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_inclusive" } }
+                  ],
+                  questioning: [
+                    { label: "Reflect", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_questioning" } },
+                    { label: "Move On", effects: { faith: 0, social: 0, stress: 0, belief: "" } },
+                    { label: "Contemplate", effects: { faith: 5, social: 5, stress: -5, belief: "nuance_questioning" } }
+                  ]
+                }
+              }];
+          }
+        } else {
+          scenarios = [{
+            title: {
+              devout: "Unexpected Turn",
+              lgbtq: "Unexpected Turn",
+              questioning: "Unexpected Turn"
+            },
+            message: "Something in the air compels you—do you investigate or ignore it?",
+            choices: {
+              devout: [
+                { label: "Investigate", effects: { faith: 5, social: 0, stress: 0, belief: "" } },
+                { label: "Ignore", effects: { faith: 0, social: 0, stress: -5, belief: "" } },
+                { label: "Contemplate", effects: { faith: 5, social: 0, stress: 0, belief: "" } }
+              ],
+              lgbtq: [
+                { label: "Investigate", effects: { faith: 5, social: 0, stress: 0, belief: "" } },
+                { label: "Ignore", effects: { faith: 0, social: 0, stress: -5, belief: "" } },
+                { label: "Contemplate", effects: { faith: 5, social: 0, stress: 0, belief: "" } }
+              ],
+              questioning: [
+                { label: "Investigate", effects: { faith: 5, social: 0, stress: 0, belief: "" } },
+                { label: "Ignore", effects: { faith: 0, social: 0, stress: -5, belief: "" } },
+                { label: "Contemplate", effects: { faith: 5, social: 0, stress: 0, belief: "" } }
+              ]
+            }
+          }];
+        }
+        const baseScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        const scenario = {
+          title: baseScenario.title[characterType],
+          message: baseScenario.message,
+          choices: baseScenario.choices[characterType]
+        };
+        openEventModal(scenario.title, scenario.message, scenario.choices, scenario.title.toLowerCase().includes("conflict"));
+      }
+      
+      function closeEventModal() {
+        document.getElementById('event-modal').style.display = 'none';
+      }
+      
+      function closeModalIfClickOutside(e) {
+        if (e.target === document.getElementById('event-modal')) {
+          closeEventModal();
+        }
+      }
+      
+      function finalizeStats() {
+        stats.faith = Math.max(0, Math.min(100, stats.faith));
+        stats.social = Math.max(0, Math.min(100, stats.social));
+        stats.stress = Math.max(0, Math.min(100, stats.stress));
+      }
+      
+      // ================= RETURN TO MAP FUNCTION =================
+      function returnToMap() {
+        document.getElementById('location-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        drawGauges();
+        updateAvatarExpression('normal');
+      }
+      
+      // ================= RANDOM REFLECTION PROMPTS =================
+      const reflectionPrompts = [
+        "Is holding your current belief making your life better or harder?",
+        "What beliefs have been most challenged by your recent experiences?",
+        "Are you finding peace in changing your beliefs?",
+        "Is your community helping or hindering your spiritual journey?"
+      ];
+      function getRandomReflection() {
+        return reflectionPrompts[Math.floor(Math.random() * reflectionPrompts.length)];
+      }
+    </script>
+  </body>
+</html>
